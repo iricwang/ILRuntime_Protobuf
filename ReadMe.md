@@ -1,4 +1,5 @@
-﻿Just for Unity
+﻿Just for Unity！
+==========
 1、将项目文件放置到Unity项目中
 2、在ILruntime中注册 Adapter: IExtensibleAdapter
 3、仅使用 ProtoBuf.Serializer.Serialize(stream, typeof(T), data) 序列化协议对象 
