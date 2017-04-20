@@ -692,7 +692,7 @@ namespace ProtoBuf.Meta
                     if (!property.CanWrite)
                     {
                         // roslyn automatically implemented properties, in particular for get-only properties: <{Name}>k__BackingField;
-                        var backingFieldName = $"<{property.Name}>k__BackingField";
+                        var backingFieldName = string.Format("<{0}>k__BackingField", property.Name);
                         foreach (var fieldMemeber in foundList)
                         {
                             if ((fieldMemeber as FieldInfo != null) && fieldMemeber.Name == backingFieldName)
@@ -1444,7 +1444,8 @@ namespace ProtoBuf.Meta
             var pi = mi as PropertyInfo;
             if (pi != null && pi.CanWrite == false)
             {
-                var backingMembers = type.GetMember($"<{((PropertyInfo)mi).Name}>k__BackingField", Helpers.IsEnum(type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                string filedName = string.Format("<{0}>k__BackingField",((PropertyInfo)mi).Name);
+                var backingMembers = type.GetMember(filedName, Helpers.IsEnum(type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 if (backingMembers!= null && backingMembers.Length == 1 && (backingMembers[0] as FieldInfo) != null)
                     backingField = backingMembers[0];
             }
