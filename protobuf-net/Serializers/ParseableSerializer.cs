@@ -8,7 +8,6 @@ using IKVM.Reflection;
 #else
 using System.Reflection;
 #endif
-
 namespace ProtoBuf.Serializers
 {
     sealed class ParseableSerializer : IProtoSerializer

@@ -340,7 +340,6 @@ namespace ProtoBuf
             {
                 case TypeCode.Empty:
                 case TypeCode.Boolean:
-                case TypeCode.Char:
                 case TypeCode.SByte:
                 case TypeCode.Byte:
                 case TypeCode.Int16:
@@ -355,6 +354,8 @@ namespace ProtoBuf
                 case TypeCode.DateTime:
                 case TypeCode.String:
                     return (ProtoTypeCode)code;
+                case TypeCode.Char:
+                    return (ProtoTypeCode)System.Type.GetTypeCode(typeof(string));
             }
             if (type == typeof(TimeSpan)) return ProtoTypeCode.TimeSpan;
             if (type == typeof(Guid)) return ProtoTypeCode.Guid;
@@ -602,10 +603,23 @@ namespace ProtoBuf
             switch(member.MemberType)
             {
                 case MemberTypes.Field: return ((FieldInfo) member).FieldType;
-                case MemberTypes.Property: return ((PropertyInfo) member).PropertyType;
+                case MemberTypes.Property:
+                    
+                    return ((PropertyInfo) member).PropertyType;
                 default: return null;
             }
 #endif
+        }
+
+        internal static Type GetMemberType(MemberInfo member, int memberIndex)
+        {
+            switch(member.MemberType)
+            {
+                case MemberTypes.Field: return ((FieldInfo) member).FieldType;
+                case MemberTypes.Property:
+                    return ((PropertyInfo) member).PropertyType;
+                default: return null;
+            }
         }
 
         internal static bool IsAssignableFrom(Type target, Type type)

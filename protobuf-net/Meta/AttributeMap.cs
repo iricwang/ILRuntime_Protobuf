@@ -63,7 +63,15 @@ namespace ProtoBuf.Meta
 #if WINRT || COREFX
             Attribute[] all = System.Linq.Enumerable.ToArray(member.GetCustomAttributes(inherit));
 #else
-            object[] all = member.GetCustomAttributes(inherit);
+            object[] all = null;
+
+            if(member is PropertyInfo)
+            {
+                all = ((PropertyInfo)member).GetCustomAttributes(inherit);
+            }
+            else
+                all = member.GetCustomAttributes(inherit);
+
 #endif
             AttributeMap[] result = new AttributeMap[all.Length];
             for(int i = 0 ; i < all.Length ; i++)
@@ -73,6 +81,18 @@ namespace ProtoBuf.Meta
             return result;
 #endif
         }
+
+        public static AttributeMap[] Create(TypeModel model, PropertyInfo info, bool inherit)
+        {
+            object[] all = info.GetCustomAttributes(inherit);
+            AttributeMap[] result = new AttributeMap[all.Length];
+            for(int i = 0 ; i < all.Length ; i++)
+            {
+                result[i] = new ReflectionAttributeMap((Attribute)all[i]);
+            }
+            return result;
+        }
+
         public static AttributeMap[] Create(TypeModel model, Assembly assembly)
         {
 
@@ -182,6 +202,8 @@ namespace ProtoBuf.Meta
             private readonly Attribute attribute;
             public ReflectionAttributeMap(Attribute attribute)
             {
+                if(attribute == null) 
+                    throw new SystemException("attribute is null!");
                 this.attribute = attribute;
             }
         }

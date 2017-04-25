@@ -239,7 +239,8 @@ namespace ProtoBuf.Serializers
         private static void EmitReadAndAddItem(Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, bool castListForAdd)
         {
             ctx.LoadAddress(list, list.Type); // needs to be the reference in case the list is value-type (static-call)
-            if (castListForAdd) ctx.Cast(add.DeclaringType);
+            if (castListForAdd) ctx.Cast(add.DeclaringType);
+
             Type itemType = tail.ExpectedType;
             bool tailReturnsValue = tail.ReturnsValue;
             if (tail.RequiresOldValue)

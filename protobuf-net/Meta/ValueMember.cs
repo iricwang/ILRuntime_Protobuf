@@ -59,17 +59,19 @@ namespace ProtoBuf.Meta
             }
         }
 
+        public int MemberTypeIndex { get; private set; }
+
         private readonly RuntimeTypeModel model;
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
-        public ValueMember(RuntimeTypeModel model, Type parentType, int fieldNumber, MemberInfo member, Type memberType, Type itemType, Type defaultType, byte dataFormat, object defaultValue) 
+        public ValueMember(RuntimeTypeModel model, Type parentType, int fieldNumber, MemberInfo member, Type memberType, Type itemType, Type defaultType, byte dataFormat, int memberTypeIndex,object defaultValue) 
             : this(model, fieldNumber,memberType, itemType, defaultType, dataFormat)
         {
             if (member == null) throw new ArgumentNullException("member");
             if (parentType == null) throw new ArgumentNullException("parentType");
             if (fieldNumber < 1 && !Helpers.IsEnum(parentType)) throw new ArgumentOutOfRangeException("fieldNumber");
-
+            this.MemberTypeIndex = memberTypeIndex;
             this.member = member;
             this.parentType = parentType;
             if (fieldNumber < 1 && !Helpers.IsEnum(parentType)) throw new ArgumentOutOfRangeException("fieldNumber");
@@ -320,6 +322,10 @@ namespace ProtoBuf.Meta
                 model.TakeLock(ref opaqueToken);// check nobody is still adding this type
                 WireType wireType;
                 Type finalType = itemType == null ? memberType : itemType;
+                if(MemberTypeIndex != -1)
+                {
+                    finalType = ProtobufPropertyHelper.FindMemberType(MemberTypeIndex);
+                }
                 IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, asReference, dynamicType, OverwriteList, true);
                 if (ser == null)
                 {
@@ -341,8 +347,13 @@ namespace ProtoBuf.Meta
                 {
                     ser = new TagDecorator(fieldNumber, wireType, IsStrict, ser);
                 }
+                bool flag = memberType.Name.Equals("String");
+                if(flag)
+                {
+                    
+                }
                 // apply lists if appropriate
-                if (itemType != null)
+                if (itemType != null && !flag)
                 {                    
 #if NO_GENERICS
                     Type underlyingItemType = itemType;

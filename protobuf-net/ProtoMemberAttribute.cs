@@ -70,6 +70,10 @@ namespace ProtoBuf
         public byte DataFormat { get { return dataFormat; } set { dataFormat = value; } }
         private byte dataFormat; 
 
+        public int MemberTypeIndex { get { return memberTypeIndex; } set { memberTypeIndex = value; } }
+        private int memberTypeIndex = -1; 
+
+
         /// <summary>
         /// Gets the unique tag used to identify this member within the type.
         /// </summary>

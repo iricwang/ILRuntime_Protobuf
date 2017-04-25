@@ -790,6 +790,25 @@ namespace ProtoBuf.Meta
             }
         }
 
+        private static void ApplyDefaultBehaviour_AddMembers(TypeModel model, AttributeFamily family, bool isEnum, BasicList partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFields implicitMode, BasicList members, PropertyInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType,  MemberInfo backingMember = null)
+        {
+            switch (implicitMode)
+            {
+                case ImplicitFields.AllFields:
+                    if (isField) forced = true;
+                    break;
+                case ImplicitFields.AllPublic:
+                    if (isPublic) forced = true;
+                    break;
+            }
+
+            if (effectiveType.IsSubclassOf(model.MapType(typeof(Delegate)))) effectiveType = null;
+            if (effectiveType != null)
+            {
+                ProtoMemberAttribute normalizedAttribute = NormalizeProtoMember(model, member, family, forced, isEnum, partialMembers, dataMemberOffset, inferTagByName, backingMember);
+                if (normalizedAttribute != null) members.Add(normalizedAttribute);
+            }
+        }
 
         static MethodInfo Coalesce(MethodInfo[] arr, int x, int y)
         {
@@ -961,6 +980,7 @@ namespace ProtoBuf.Meta
             string name = null;
             bool isPacked = false, ignore = false, done = false, isRequired = false, asReference = false, asReferenceHasValue = false, dynamicType = false, tagIsPinned = false, overwriteList = false;
             byte dataFormat = DataFormat.Default;
+            int memberTypeIndex = -1;
             if (isEnum) forced = true;
             AttributeMap[] attribs = AttributeMap.Create(model, member, true);
             AttributeMap attrib;
@@ -1013,7 +1033,7 @@ namespace ProtoBuf.Meta
                     GetFieldBoolean(ref isPacked, attrib, "IsPacked");
                     GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
                     GetDataFormat(ref dataFormat, attrib, "DataFormat");
-
+                    GetMemberIndex(ref memberTypeIndex, attrib, "MemberTypeIndex");
 #if !FEAT_IKVM
                     // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
                     GetFieldBoolean(ref asReferenceHasValue, attrib, "AsReferenceHasValue", false);
@@ -1039,6 +1059,7 @@ namespace ProtoBuf.Meta
                             GetFieldBoolean(ref isPacked, ppma, "IsPacked");
                             GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
                             GetDataFormat(ref dataFormat, ppma, "DataFormat");
+                            GetMemberIndex(ref memberTypeIndex, attrib, "MemberTypeIndex");
 
 #if !FEAT_IKVM
                             // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
@@ -1095,6 +1116,7 @@ namespace ProtoBuf.Meta
             result.Name = Helpers.IsNullOrEmpty(name) ? member.Name : name;
             result.Member = backingMember ?? member;
             result.TagIsPinned = tagIsPinned;
+            result.MemberTypeIndex = memberTypeIndex;
             return result;
         }
         
@@ -1102,9 +1124,7 @@ namespace ProtoBuf.Meta
         {
             MemberInfo member;
             if (normalizedAttribute == null || (member = normalizedAttribute.Member) == null) return null; // nix
-
-            Type effectiveType = Helpers.GetMemberType(member);
-
+            Type effectiveType = Helpers.GetMemberType(member, normalizedAttribute.MemberTypeIndex);
             
             Type itemType = null;
             Type defaultType = null;
@@ -1153,7 +1173,7 @@ namespace ProtoBuf.Meta
                 if(attrib.TryGet("Value", out tmp)) defaultValue = tmp;
             }
             ValueMember vm = ((isEnum || normalizedAttribute.Tag > 0))
-                ? new ValueMember(model, type, normalizedAttribute.Tag, member, effectiveType, itemType, defaultType, normalizedAttribute.DataFormat, defaultValue)
+                ? new ValueMember(model, type, normalizedAttribute.Tag, member, effectiveType, itemType, defaultType, normalizedAttribute.DataFormat,normalizedAttribute.MemberTypeIndex, defaultValue)
                     : null;
             if (vm != null)
             {
@@ -1195,6 +1215,13 @@ namespace ProtoBuf.Meta
             if ((attrib == null) || (value != DataFormat.Default)) return;
             object obj;
             if (attrib.TryGet(memberName, out obj) && obj != null) value = (byte)obj;
+        }
+
+        private static void GetMemberIndex(ref int value, AttributeMap attrib, string memberName)
+        {
+            if (attrib == null) return;
+            object obj;
+            if (attrib.TryGet(memberName, out obj) && obj != null) value = (int)obj;
         }
 
         private static void GetIgnore(ref bool ignore, AttributeMap attrib, AttributeMap[] attribs, string fullName)
@@ -1449,7 +1476,7 @@ namespace ProtoBuf.Meta
                 if (backingMembers!= null && backingMembers.Length == 1 && (backingMembers[0] as FieldInfo) != null)
                     backingField = backingMembers[0];
             }
-            ValueMember newField = new ValueMember(model, type, fieldNumber, backingField ?? mi, miType, itemType, defaultType, DataFormat.Default, defaultValue);
+            ValueMember newField = new ValueMember(model, type, fieldNumber, backingField ?? mi, miType, itemType, defaultType, DataFormat.Default,-1, defaultValue);
             if (backingField != null)
                 newField.SetName(mi.Name);
             Add(newField);
