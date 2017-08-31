@@ -33,7 +33,7 @@ namespace MegoEngine.IL.Adapters
             return new Adaptor(appdomain, instance);
         }
 
-        internal class Adaptor : IExtensible, CrossBindingAdaptorType
+        public class Adaptor : IExtensible, CrossBindingAdaptorType
         {
             ILTypeInstance instance;
             ILRuntime.Runtime.Enviorment.AppDomain appdomain;
@@ -65,4 +65,5 @@ namespace MegoEngine.IL.Adapters
             }
         }
     }
+
 }
