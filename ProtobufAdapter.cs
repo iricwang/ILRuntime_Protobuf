@@ -70,6 +70,12 @@ namespace MegoEngine
             return null;
         }
 
+        public Type GetType(string classFullName)
+        {
+            var type = appdomain.GetType(classFullName);
+            return type == null ? null : type.ReflectionType;
+        }
+
         #endregion
     }
     
